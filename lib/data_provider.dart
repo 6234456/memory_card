@@ -4,11 +4,45 @@ class DataProvider{
   List<String> label;
   DataProvider(this.title, this.content, this.ref, this.label);
 
-  static List<DataProvider> getInstance(){
-    return [
-      DataProvider("Pflicht zur Aufstellung", "Der Kaufmann hat zu Beginn seines Handelsgewerbes und für den Schluß eines jeden Geschäftsjahrs einen das Verhältnis seines Vermögens und seiner Schulden darstellenden Abschluß (Eröffnungsbilanz, Bilanz) aufzustellen. Auf die Eröffnungsbilanz sind die für den Jahresabschluß geltenden Vorschriften entsprechend anzuwenden, soweit sie sich auf die Bilanz beziehen.", "§ 242.1 HGB", ["HGB", "Pflicht"]),
-      DataProvider("Umfang eines Jahresabschlusses", "Die Bilanz und die Gewinn- und Verlustrechnung bilden den Jahresabschluß.", "§ 242.3 HGB", ["HGB", "Jahresabschluss"]),
-      DataProvider("Befreiung von der Pflicht zur Buchführung und Erstellung eines Inventars", "Einzelkaufleute, die an den Abschlussstichtagen von zwei aufeinander folgenden Geschäftsjahren nicht mehr als jeweils 600 000 Euro Umsatzerlöse und jeweils 60 000 Euro Jahresüberschuss aufweisen, brauchen die §§ 238 bis 241 nicht anzuwenden. Im Fall der Neugründung treten die Rechtsfolgen schon ein, wenn die Werte des Satzes 1 am ersten Abschlussstichtag nach der Neugründung nicht überschritten werden.", "§ 241a HGB", ["HGB", "Jahresabschluss", "Befreiung"]),
-    ];
+  static List<DataProvider> getInstance({String law = "HGB", String s}){
+
+    final ln = s.split("\n");
+    final p = new RegExp(r"\(weggefallen\)");
+
+    final sep1 = r"|||";
+    final sep2 = r"###";
+
+    final regParag = new RegExp(r"^(§\s+\d+[a-z]*)\s+(.*)$");
+    final regSatz = new RegExp(r"^\s*\((\d+[a-z]*)\)\s+(.*)$");
+
+    List<DataProvider> res = [];
+
+    ln.forEach((f){
+       var l = f.split(sep1);
+
+       if(l.length > 1 && !l[0].contains(p)){
+
+          var match = regParag.allMatches(l[0]).elementAt(0);
+          res.addAll(l[1].split(sep2)
+              .map(
+                (e){
+                  var f = e.trim();
+                  if(!regSatz.hasMatch(f))
+                    return new DataProvider(match.group(2), f, "${match.group(1)} $law ", []);
+                  else{
+                    var m = regSatz.allMatches(f).elementAt(0);
+                    return new DataProvider(match.group(2), m.group(2), "${match.group(1)}.${m.group(1)} $law ", []);
+                  }
+                })
+          );
+       }
+    });
+
+    return res;
+
+  }
+
+  static void migrate(){
+
   }
 }
